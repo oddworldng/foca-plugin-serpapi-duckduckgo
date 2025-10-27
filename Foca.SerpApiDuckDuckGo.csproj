@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3A9D6A2E-7F1F-4C8D-8C19-23E7E3A2B3B0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Foca.SerpApiDuckDuckGo</RootNamespace>
+    <AssemblyName>Foca.SerpApiDuckDuckGo</AssemblyName>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>plugin\SerpApiDuckDuckGo\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;FOCA_API</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>plugin\SerpApiDuckDuckGo\</OutputPath>
+    <DefineConstants>TRACE;FOCA_API</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="img\icon.png" Condition="Exists('img\icon.png')" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fody">
+      <Version>6.8.0</Version>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Costura.Fody">
+      <Version>5.7.0</Version>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <Target Name="RemoveLibFolder" AfterTargets="Build">
+    <RemoveDir Directories="$(OutDir)lib" Condition="Exists('$(OutDir)lib')" />
+  </Target>
+  <!-- Copiar Newtonsoft.Json.dll al directorio del plugin para evitar fallos en tiempo de carga -->
+  <Target Name="CopyNewtonsoftToOutDir" AfterTargets="Build">
+    <ItemGroup>
+      <NewtonsoftDll Include="packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(NewtonsoftDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('@(NewtonsoftDll)')" />
+  </Target>
+  <!-- No copiamos Newtonsoft.Json; Costura lo incrusta en el DLL del plugin -->
+  <ItemGroup>
+    <Compile Include="Plugin.cs" />
+    <Compile Include="PluginExportApi.cs" />
+    <Compile Include="AssemblyResolver.cs" />
+    <Compile Include="Config\SerpApiSettings.cs" />
+    <Compile Include="Config\SerpApiConfigStore.cs" />
+    <Compile Include="Api\SerpApiClient.cs" />
+    <Compile Include="Search\QueryBuilder.cs" />
+    <Compile Include="Search\ResultMapper.cs" />
+    <Compile Include="Db\DbInserter.cs" />
+    <Compile Include="Ui\ConfigForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ui\ConfigForm.Designer.cs">
+      <DependentUpon>ConfigForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\SearchForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ui\SearchForm.Designer.cs">
+      <DependentUpon>SearchForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\SelectProjectForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ui\SelectProjectForm.Designer.cs">
+      <DependentUpon>SelectProjectForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\NewProjectForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ui\NewProjectForm.Designer.cs">
+      <DependentUpon>NewProjectForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="README.md" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PluginsAPI">
+      <HintPath>FOCA\Plugins Release\PluginsAPI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
+
+
