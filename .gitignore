@@ -416,3 +416,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Other
+FOCA/*
+foca-project-export/*
+plugin/*
