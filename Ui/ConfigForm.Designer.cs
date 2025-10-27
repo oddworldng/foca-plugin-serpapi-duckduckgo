@@ -40,6 +40,12 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.lblMinInurl = new System.Windows.Forms.Label();
             this.numMinInurl = new System.Windows.Forms.NumericUpDown();
+            this.lblMaxResults = new System.Windows.Forms.Label();
+            this.numMaxResults = new System.Windows.Forms.NumericUpDown();
+            this.lblMaxPages = new System.Windows.Forms.Label();
+            this.numMaxPages = new System.Windows.Forms.NumericUpDown();
+            this.lblDelayPages = new System.Windows.Forms.Label();
+            this.numDelayPages = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.numMinInurl)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMaxResults)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMaxPages)).BeginInit();
