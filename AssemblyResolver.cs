@@ -41,4 +41,32 @@ namespace Foca.SerpApiDuckDuckGo
     }
 }
 
+// Inicialización temprana sin ModuleInitializer (C# 7.3):
+// usamos un tipo estático con constructor estático. El CLR garantiza que
+// el cctor se ejecuta antes del primer acceso a cualquier miembro del tipo
+// y también durante la reflexión de tipos en la mayoría de escenarios.
+namespace Foca.SerpApiDuckDuckGo
+{
+    internal static class EarlyBinder
+    {
+        static EarlyBinder()
+        {
+            try
+            {
+                AssemblyResolver.Init();
+                try
+                {
+                    var p = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FocaSerpApiDuckDuckGo.plugin.log");
+                    System.IO.File.AppendAllText(p, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff ") + "Early binder executed" + Environment.NewLine);
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        // Método de referencia para forzar JIT del tipo desde el ctor del plugin
+        public static void Touch() { }
+    }
+}
+
 

@@ -18,7 +18,7 @@ namespace Foca.SerpApiDuckDuckGo
 		void Initialize();
 	}
 
-	public sealed class SerpApiDuckDuckGoPlugin : IFocaPlugin
+    public sealed class SerpApiDuckDuckGoPlugin : IFocaPlugin
 	{
 		public string Name => "FOCA SerpApi DuckDuckGo";
 		public string Description => "Búsqueda avanzada de documentos vía SerpApi (DuckDuckGo)";
@@ -50,7 +50,7 @@ namespace Foca
 		}
 	}
 
-	public class Plugin
+    public class Plugin
 	{
 		private string _name = "Búsqueda avanzada";
 		private string _description = "Búsqueda de documentos (DuckDuckGo/SerpApi)";
@@ -70,18 +70,19 @@ namespace Foca
 			set { this._description = value; }
 		}
 
-		public Plugin()
+        public Plugin()
 		{
 			try
 			{
 				PluginDiag.Log("Plugin ctor start");
-				// Initialize resolver to load dependencies from plugin folder/lib
-				Foca.SerpApiDuckDuckGo.AssemblyResolver.Init();
+                // Inicializar el resolver y forzar el cctor de EarlyBinder para asegurar el AssemblyResolve
+                Foca.SerpApiDuckDuckGo.AssemblyResolver.Init();
+                Foca.SerpApiDuckDuckGo.EarlyBinder.Touch();
 				this.export = new Export();
 
-				var hostPanel = new Panel { Dock = DockStyle.Fill, Visible = false };
-				var pluginPanel = new PluginPanel(hostPanel, false);
-				this.export.Add(pluginPanel);
+                var hostPanel = new Panel { Dock = DockStyle.Fill, Visible = false };
+                var pluginPanel = new PluginPanel(hostPanel, false);
+                this.export.Add(pluginPanel);
 				PluginDiag.Log("PluginPanel added");
 
 				var root = new ToolStripMenuItem(this._name);
@@ -89,7 +90,7 @@ namespace Foca
 				// Cargar icono si existe (opcional)
 				TryLoadIcon(root);
 
-				// Submenú Configuración de SerpApi
+                // Submenú Configuración de SerpApi
 				var miConfig = new ToolStripMenuItem("Configuración de SerpApi");
 				miConfig.Click += (s, e) =>
 				{
@@ -108,7 +109,7 @@ namespace Foca
 				};
 
 				// Submenú Buscar
-				var miBuscar = new ToolStripMenuItem("Buscar");
+                var miBuscar = new ToolStripMenuItem("Buscar");
 				miBuscar.Click += (s, e) =>
 				{
 					try
@@ -131,17 +132,12 @@ namespace Foca
 				var pluginMenu = new PluginToolStripMenuItem(root);
 				this.export.Add(pluginMenu);
 				PluginDiag.Log("Menu added");
-			}
-			catch (Exception ex)
+            }
+            catch (Exception ex)
 			{
-				try
-				{
-					PluginDiag.Log("Plugin ctor error: " + ex);
-					MessageBox.Show("Error al inicializar el plugin SerpApiDuckDuckGo:\n\n" + ex,
-						"FOCA SerpApi DuckDuckGo", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
-				catch { }
-				// No relanzar para evitar que FOCA aborte el import con mensaje genérico
+                // Igual que en foca-excel-export: log y relanzar para que FOCA muestre el error
+                PluginDiag.Log("Plugin ctor error: " + ex.Message);
+                throw;
 			}
 		}
 

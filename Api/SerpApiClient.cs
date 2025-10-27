@@ -37,14 +37,16 @@ namespace Foca.SerpApiDuckDuckGo.Api
             _httpClient.Timeout = _timeout;
         }
 
-        public async Task<(bool ok, string error, JObject json)> TestConnectionAsync(string apiKey, CancellationToken ct = default(CancellationToken))
+        // No exponer JObject en la API pública para evitar fallos de importación del plugin
+        public async Task<(bool ok, string error, string json)> TestConnectionAsync(string apiKey, CancellationToken ct = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(apiKey)) return (false, "API Key no configurada", null);
             var url = $"https://serpapi.com/search.json?engine=duckduckgo&q=test&api_key={Uri.EscapeDataString(apiKey)}";
-            return await GetAsync(url, ct);
+            var (ok, err, jsonObj) = await GetAsync(url, ct);
+            return (ok, err, jsonObj);
         }
 
-        public async Task<(bool ok, string error, JObject json)> SearchAsync(string apiKey, string query, string kl, int page, CancellationToken ct = default(CancellationToken))
+        public async Task<(bool ok, string error, string json)> SearchAsync(string apiKey, string query, string kl, int page, CancellationToken ct = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(apiKey)) return (false, "API Key no configurada", null);
             var sb = new StringBuilder("https://serpapi.com/search.json?engine=duckduckgo");
@@ -53,10 +55,12 @@ namespace Foca.SerpApiDuckDuckGo.Api
             if (page > 0) sb.Append("&start=").Append(page * 10); // DuckDuckGo step; SerpApi paginates by start index
             sb.Append("&api_key=").Append(Uri.EscapeDataString(apiKey));
             var url = sb.ToString();
-            return await GetAsync(url, ct);
+            var (ok, err, jsonObj) = await GetAsync(url, ct);
+            return (ok, err, jsonObj);
         }
 
-        private async Task<(bool ok, string error, JObject json)> GetAsync(string url, CancellationToken ct)
+        // Devuelve string JSON para mantener la API pública libre de tipos externos
+        private async Task<(bool ok, string error, string json)> GetAsync(string url, CancellationToken ct)
         {
             await RespectRateLimitAsync(ct);
             try
@@ -70,16 +74,8 @@ namespace Foca.SerpApiDuckDuckGo.Api
                         return (false, "Acceso denegado por SerpApi (401/403). Verifica la API Key o el plan.", null);
                     return (false, $"Error HTTP {(int)res.StatusCode}: {res.ReasonPhrase}", null);
                 }
-                try
-                {
-                    var json = JObject.Parse(body);
-                    return (true, null, json);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex);
-                    return (false, "Respuesta inválida de SerpApi.", null);
-                }
+                // No parseamos aquí para no requerir Newtonsoft.Json en firmas públicas
+                return (true, null, body);
             }
             catch (TaskCanceledException)
             {

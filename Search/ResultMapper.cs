@@ -10,10 +10,20 @@ namespace Foca.SerpApiDuckDuckGo.Search
     /// </summary>
     public static class ResultMapper
     {
-        public static IEnumerable<string> ExtractLinks(JObject json)
+        // Aceptar string para no exponer JObject en API pública
+        public static IEnumerable<string> ExtractLinks(string json)
         {
-            if (json == null) yield break;
-            var organic = json["organic_results"] as JArray;
+            if (string.IsNullOrWhiteSpace(json)) yield break;
+            JArray organic = null;
+            try
+            {
+                var jobj = JObject.Parse(json);
+                organic = jobj["organic_results"] as JArray;
+            }
+            catch
+            {
+                yield break;
+            }
             if (organic == null) yield break;
             foreach (var item in organic.OfType<JObject>())
             {

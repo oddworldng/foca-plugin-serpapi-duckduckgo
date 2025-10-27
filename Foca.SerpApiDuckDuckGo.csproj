@@ -40,7 +40,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Net.Http" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="img\icon.png" Condition="Exists('img\icon.png')" />
@@ -61,13 +60,14 @@
   <Target Name="RemoveLibFolder" AfterTargets="Build">
     <RemoveDir Directories="$(OutDir)lib" Condition="Exists('$(OutDir)lib')" />
   </Target>
-  <!-- Copiar Newtonsoft.Json.dll al directorio del plugin para evitar fallos en tiempo de carga -->
+  <!-- Copiar Newtonsoft.Json.dll al directorio del plugin para que Assembly.GetTypes() no falle por dependencias -->
   <Target Name="CopyNewtonsoftToOutDir" AfterTargets="Build">
     <ItemGroup>
       <NewtonsoftDll Include="packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(NewtonsoftDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('@(NewtonsoftDll)')" />
   </Target>
+  <!-- Sin copias manuales: Costura incrusta dependencias en el DLL -->
   <!-- No copiamos Newtonsoft.Json; Costura lo incrusta en el DLL del plugin -->
   <ItemGroup>
     <Compile Include="Plugin.cs" />
@@ -115,7 +115,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PluginsAPI">
-      <HintPath>FOCA\Plugins Release\PluginsAPI.dll</HintPath>
+      <HintPath>foca-excel-export\lib\PluginsAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
