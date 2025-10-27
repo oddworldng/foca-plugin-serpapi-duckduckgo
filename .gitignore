@@ -419,5 +419,5 @@ FodyWeavers.xsd
 
 # Other
 FOCA/*
-foca-project-export/*
+foca-excel-export/*
 plugin/*
