@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
-  <!-- Forzar la incrustación de Newtonsoft.Json en el DLL del plugin -->
-  <Costura IncludeAssemblies="Newtonsoft.Json" IncludeDebugSymbols="false" CreateTemporaryAssemblies="false" />
+  <!-- Incrustar dependencias en el DLL del plugin -->
+  <Costura IncludeDebugSymbols="false" CreateTemporaryAssemblies="false" />
 </Weavers>

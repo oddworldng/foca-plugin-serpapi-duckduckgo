@@ -25,7 +25,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>plugin\SerpApiDuckDuckGo\</OutputPath>
     <DefineConstants>TRACE;FOCA_API</DefineConstants>
@@ -60,12 +60,14 @@
   <Target Name="RemoveLibFolder" AfterTargets="Build">
     <RemoveDir Directories="$(OutDir)lib" Condition="Exists('$(OutDir)lib')" />
   </Target>
-  <!-- Copiar Newtonsoft.Json.dll al directorio del plugin para que Assembly.GetTypes() no falle por dependencias -->
-  <Target Name="CopyNewtonsoftToOutDir" AfterTargets="Build">
+  <!-- No copiar dependencias: Costura incrusta todo en el DLL final -->
+  <!-- Dejar salida totalmente limpia en Release: solo el DLL del plugin -->
+  <Target Name="PruneOutputs" AfterTargets="Build">
     <ItemGroup>
-      <NewtonsoftDll Include="packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll" />
+      <Keep Include="$(OutDir)$(AssemblyName).dll" />
+      <FilesToDelete Include="$(OutDir)*.pdb;$(OutDir)*.dll.config;$(OutDir)*.xml" />
     </ItemGroup>
-    <Copy SourceFiles="@(NewtonsoftDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('@(NewtonsoftDll)')" />
+    <Delete Files="@(FilesToDelete)" ContinueOnError="true" />
   </Target>
   <!-- Sin copias manuales: Costura incrusta dependencias en el DLL -->
   <!-- No copiamos Newtonsoft.Json; Costura lo incrusta en el DLL del plugin -->
@@ -106,7 +108,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config" Condition=" '$(Configuration)' == 'Debug' " />
     <None Include="README.md" />
     <None Include="packages.config" />
   </ItemGroup>
