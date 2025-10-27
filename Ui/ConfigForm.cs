@@ -21,6 +21,15 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             var local = SerpApiConfigStore.Load()?.SerpApiKey;
             txtApiKey.Text = string.IsNullOrWhiteSpace(env) ? local : env;
             lblPriority.Text = "Prioridad de lectura: 1) SERPAPI_API_KEY  2) config.json";
+            // Cargar MinInurlSegmentLength
+            var cfg = SerpApiConfigStore.Load();
+            if (cfg != null)
+            {
+                try { numMinInurl.Value = Math.Max(0, Math.Min(32, cfg.MinInurlSegmentLength)); } catch { }
+                try { numMaxResults.Value = Math.Max(0, Math.Min(1000000, cfg.MaxResults)); } catch { }
+                try { numMaxPages.Value = Math.Max(0, Math.Min(10000, cfg.MaxPagesPerSearch)); } catch { }
+                try { numDelayPages.Value = Math.Max(0, Math.Min(60000, cfg.DelayBetweenPagesMs)); } catch { }
+            }
             toolTip1.SetToolTip(lblPriority, "La variable de entorno SERPAPI_API_KEY tiene prioridad sobre config.json en %APPDATA%\\FOCA\\Plugins\\SerpApiDuckDuckGo\\config.json");
         }
 
@@ -73,7 +82,13 @@ namespace Foca.SerpApiDuckDuckGo.Ui
                         return;
                     }
                 }
-                SerpApiConfigStore.Save(new SerpApiSettings { SerpApiKey = txtApiKey.Text?.Trim() });
+                SerpApiConfigStore.Save(new SerpApiSettings {
+                    SerpApiKey = txtApiKey.Text?.Trim(),
+                    MinInurlSegmentLength = (int)numMinInurl.Value,
+                    MaxResults = (int)numMaxResults.Value,
+                    MaxPagesPerSearch = (int)numMaxPages.Value,
+                    DelayBetweenPagesMs = (int)numDelayPages.Value
+                });
                 MessageBox.Show("Configuración guardada correctamente.", "Configuración de SerpApi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
                 this.Close();

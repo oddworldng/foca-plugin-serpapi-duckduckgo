@@ -16,6 +16,10 @@ namespace Foca.SerpApiDuckDuckGo.Ui
         private System.Windows.Forms.Button btnIncorporarNuevo;
         private System.Windows.Forms.Button btnExportar;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.TextBox txtQueryPreview;
+        private System.Windows.Forms.CheckBox chkRestrictPath;
+        private System.Windows.Forms.Label lblEngine;
+        private System.Windows.Forms.ComboBox cmbEngine;
 
         protected override void Dispose(bool disposing)
         {
@@ -41,6 +45,10 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             this.btnIncorporarNuevo = new System.Windows.Forms.Button();
             this.btnExportar = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.txtQueryPreview = new System.Windows.Forms.TextBox();
+            this.chkRestrictPath = new System.Windows.Forms.CheckBox();
+            this.lblEngine = new System.Windows.Forms.Label();
+            this.cmbEngine = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // lblRootUrl
@@ -173,11 +181,59 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // txtQueryPreview
+            // 
+            this.txtQueryPreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtQueryPreview.Location = new System.Drawing.Point(90, 172);
+            this.txtQueryPreview.Name = "txtQueryPreview";
+            this.txtQueryPreview.ReadOnly = true;
+            this.txtQueryPreview.Size = new System.Drawing.Size(554, 20);
+            this.txtQueryPreview.TabIndex = 13;
+            // 
+            // chkRestrictPath
+            // 
+            this.chkRestrictPath.AutoSize = true;
+            this.chkRestrictPath.Checked = true;
+            this.chkRestrictPath.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkRestrictPath.Enabled = false;
+            this.chkRestrictPath.Location = new System.Drawing.Point(219, 151);
+            this.chkRestrictPath.Name = "chkRestrictPath";
+            this.chkRestrictPath.Size = new System.Drawing.Size(151, 17);
+            this.chkRestrictPath.TabIndex = 14;
+            this.chkRestrictPath.Text = "Restringir a ruta indicada";
+            this.chkRestrictPath.UseVisualStyleBackColor = true;
+            // 
+            // lblEngine
+            // 
+            this.lblEngine.AutoSize = true;
+            this.lblEngine.Location = new System.Drawing.Point(330, 152);
+            this.lblEngine.Name = "lblEngine";
+            this.lblEngine.Size = new System.Drawing.Size(52, 13);
+            this.lblEngine.TabIndex = 15;
+            this.lblEngine.Text = "Buscador:";
+            // 
+            // cmbEngine
+            // 
+            this.cmbEngine.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbEngine.FormattingEnabled = true;
+            this.cmbEngine.Items.AddRange(new object[] {
+            "DuckDuckGo",
+            "Google"});
+            this.cmbEngine.Location = new System.Drawing.Point(388, 149);
+            this.cmbEngine.Name = "cmbEngine";
+            this.cmbEngine.Size = new System.Drawing.Size(121, 21);
+            this.cmbEngine.TabIndex = 16;
+            // 
             // SearchForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(656, 435);
+            this.Controls.Add(this.cmbEngine);
+            this.Controls.Add(this.lblEngine);
+            this.Controls.Add(this.chkRestrictPath);
+            this.Controls.Add(this.txtQueryPreview);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnExportar);
             this.Controls.Add(this.btnIncorporarNuevo);

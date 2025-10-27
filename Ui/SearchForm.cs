@@ -68,37 +68,77 @@ namespace Foca.SerpApiDuckDuckGo.Ui
                 }
 
                 var domain = txtRootUrl.Text;
+                var pathSegs = QueryBuilder.GetPathSegments(domain);
                 var selectedExts = chkListExtensions.CheckedItems.Cast<object>().Select(o => o.ToString()).ToArray();
-                var query = QueryBuilder.Build(domain, selectedExts);
+                string engine = cmbEngine.SelectedItem as string ?? "DuckDuckGo";
+                var query = engine == "Google" ? QueryBuilder.BuildGoogle(domain, selectedExts) : QueryBuilder.Build(domain, selectedExts);
+                // Mostrar la consulta exacta que enviamos a DuckDuckGo/SerpApi
+                txtQueryPreview.Text = query;
                 var kl = txtKl.Text?.Trim();
-                int maxResults = 200;
-                try { maxResults = int.Parse(ConfigurationManager.AppSettings["MaxResults"] ?? "200"); } catch { }
+                int maxResults = 0; // 0 = ilimitado
+                int maxPages = 0;
+                int delayMs = 0;
+                try
+                {
+                    var cfg = Foca.SerpApiDuckDuckGo.Config.SerpApiConfigStore.Load();
+                    if (cfg != null)
+                    {
+                        maxResults = cfg.MaxResults;
+                        maxPages = cfg.MaxPagesPerSearch;
+                        delayMs = cfg.DelayBetweenPagesMs;
+                    }
+                }
+                catch { }
 
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 using (var client = new SerpApiClient())
                 {
-                    for (int page = 0; _results.Count < maxResults; page++)
+                    for (int page = 0; (maxResults == 0 || _results.Count < maxResults) && (maxPages == 0 || page < maxPages); page++)
                     {
                         ct.ThrowIfCancellationRequested();
-                        var (ok, error, json) = await client.SearchAsync(apiKey, query, kl, page, ct);
+                        (bool ok, string error, string json) res;
+                        if (engine == "Google")
+                        {
+                            // Google pagina con start=0,10,20...
+                            int start = page * 10;
+                            // Usar dominio local y 10 resultados por página
+                            res = await client.SearchGoogleAsync(apiKey, query, null, null, start, "google.es", 10, ct);
+                        }
+                        else
+                        {
+                            res = await client.SearchAsync(apiKey, query, kl, page, ct);
+                        }
+                        var ok = res.ok; var error = res.error; var json = res.json;
                         if (!ok)
                         {
                             MessageBox.Show(error ?? "Error de búsqueda", "Búsqueda avanzada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             break;
                         }
-                        var links = ResultMapper.ExtractLinks(json).ToList();
-                        if (links.Count == 0) break; // no more results
+                        var pageLinks = ResultMapper.ExtractLinks(json).ToList();
+                        if (pageLinks.Count == 0) break; // la API ya no devuelve más resultados
+
+                        // Filtrar solo por host exacto. La ruta (inurl:...) se usa para sesgar la búsqueda
+                        // pero no forzamos coincidencia estricta porque DuckDuckGo puede ignorar algunos inurl.
+                        var links = pageLinks
+                            .Where(u => QueryBuilder.IsUrlInDomain(u, domain))
+                            .Where(u => QueryBuilder.UrlPathContainsSegments(u, pathSegs))
+                            .ToList();
+
+                        int addedThisPage = 0;
                         foreach (var link in links)
                         {
                             if (seen.Add(link))
                             {
                                 _results.Add(link);
                                 lstResults.Items.Add(link);
+                                addedThisPage++;
                                 if (_results.Count >= maxResults) break;
                             }
                         }
                         lblCount.Text = _results.Count + " resultados";
-                        if (links.Count < 10) break; // likely end
+                        // No asumimos tamaño de página fijo; continuamos hasta quedarnos sin resultados
+                        if (addedThisPage == 0) break; // corta si no añade nada nuevo (evita bucles)
+                        if (delayMs > 0) await Task.Delay(delayMs, ct);
                     }
                 }
 

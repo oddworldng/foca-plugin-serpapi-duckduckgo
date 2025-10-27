@@ -8,6 +8,14 @@ namespace Foca.SerpApiDuckDuckGo.Config
     public class SerpApiSettings
     {
         public string SerpApiKey { get; set; }
+        // Longitud mínima de segmentos usados en inurl:"segmento" (por defecto 4)
+        public int MinInurlSegmentLength { get; set; } = 4;
+        // Máximo de resultados a recoger (0 = ilimitado)
+        public int MaxResults { get; set; } = 0;
+        // Máximo de páginas a consultar (0 = ilimitado)
+        public int MaxPagesPerSearch { get; set; } = 10;
+        // Retardo entre páginas en ms (para evitar 429). 0 = sin retardo
+        public int DelayBetweenPagesMs { get; set; } = 0;
 
         public static string ResolveApiKey(Func<string> appConfigReader = null)
         {

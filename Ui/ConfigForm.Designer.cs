@@ -10,6 +10,14 @@ namespace Foca.SerpApiDuckDuckGo.Ui
         private System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.Label lblPriority;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.Label lblMinInurl;
+        private System.Windows.Forms.NumericUpDown numMinInurl;
+        private System.Windows.Forms.Label lblMaxResults;
+        private System.Windows.Forms.NumericUpDown numMaxResults;
+        private System.Windows.Forms.Label lblMaxPages;
+        private System.Windows.Forms.NumericUpDown numMaxPages;
+        private System.Windows.Forms.Label lblDelayPages;
+        private System.Windows.Forms.NumericUpDown numDelayPages;
 
         protected override void Dispose(bool disposing)
         {
@@ -30,7 +38,121 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             this.btnCancelar = new System.Windows.Forms.Button();
             this.lblPriority = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.lblMinInurl = new System.Windows.Forms.Label();
+            this.numMinInurl = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.numMinInurl)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numMaxResults)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numMaxPages)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numDelayPages)).BeginInit();
             this.SuspendLayout();
+            // lblMinInurl
+            // 
+            this.lblMinInurl.AutoSize = true;
+            this.lblMinInurl.Location = new System.Drawing.Point(12, 71);
+            this.lblMinInurl.Name = "lblMinInurl";
+            this.lblMinInurl.Size = new System.Drawing.Size(132, 13);
+            this.lblMinInurl.TabIndex = 6;
+            this.lblMinInurl.Text = "Longitud mínima para inurl:";
+            // 
+            // numMinInurl
+            // 
+            this.numMinInurl.Location = new System.Drawing.Point(184, 69);
+            this.numMinInurl.Minimum = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.numMinInurl.Maximum = new decimal(new int[] {
+            1024,
+            0,
+            0,
+            0});
+            this.numMinInurl.Name = "numMinInurl";
+            this.numMinInurl.Size = new System.Drawing.Size(60, 20);
+            this.numMinInurl.TabIndex = 7;
+            this.numMinInurl.Value = new decimal(new int[] {
+            4,
+            0,
+            0,
+            0});
+            // 
+            // lblMaxResults
+            // 
+            this.lblMaxResults.AutoSize = true;
+            this.lblMaxResults.Location = new System.Drawing.Point(260, 71);
+            this.lblMaxResults.Name = "lblMaxResults";
+            this.lblMaxResults.Size = new System.Drawing.Size(168, 13);
+            this.lblMaxResults.TabIndex = 8;
+            this.lblMaxResults.Text = "Máx. resultados (0 = ilimitado):";
+            // 
+            // numMaxResults
+            // 
+            this.numMaxResults.Location = new System.Drawing.Point(434, 69);
+            this.numMaxResults.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.numMaxResults.Name = "numMaxResults";
+            this.numMaxResults.Size = new System.Drawing.Size(90, 20);
+            this.numMaxResults.TabIndex = 9;
+            this.numMaxResults.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            // 
+            // lblMaxPages
+            // 
+            this.lblMaxPages.AutoSize = true;
+            this.lblMaxPages.Location = new System.Drawing.Point(12, 97);
+            this.lblMaxPages.Name = "lblMaxPages";
+            this.lblMaxPages.Size = new System.Drawing.Size(150, 13);
+            this.lblMaxPages.TabIndex = 10;
+            this.lblMaxPages.Text = "Máx. páginas (0 = ilimitado):";
+            // 
+            // numMaxPages
+            // 
+            this.numMaxPages.Location = new System.Drawing.Point(184, 95);
+            this.numMaxPages.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.numMaxPages.Name = "numMaxPages";
+            this.numMaxPages.Size = new System.Drawing.Size(60, 20);
+            this.numMaxPages.TabIndex = 11;
+            this.numMaxPages.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            // 
+            // lblDelayPages
+            // 
+            this.lblDelayPages.AutoSize = true;
+            this.lblDelayPages.Location = new System.Drawing.Point(260, 97);
+            this.lblDelayPages.Name = "lblDelayPages";
+            this.lblDelayPages.Size = new System.Drawing.Size(171, 13);
+            this.lblDelayPages.TabIndex = 12;
+            this.lblDelayPages.Text = "Retardo entre páginas (ms, 0=sin):";
+            // 
+            // numDelayPages
+            // 
+            this.numDelayPages.Location = new System.Drawing.Point(434, 95);
+            this.numDelayPages.Maximum = new decimal(new int[] {
+            60000,
+            0,
+            0,
+            0});
+            this.numDelayPages.Name = "numDelayPages";
+            this.numDelayPages.Size = new System.Drawing.Size(90, 20);
+            this.numDelayPages.TabIndex = 13;
+            this.numDelayPages.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
             // 
             // lblApiKey
             // 
@@ -96,7 +218,15 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(600, 114);
+            this.ClientSize = new System.Drawing.Size(600, 170);
+            this.Controls.Add(this.numDelayPages);
+            this.Controls.Add(this.lblDelayPages);
+            this.Controls.Add(this.numMaxPages);
+            this.Controls.Add(this.lblMaxPages);
+            this.Controls.Add(this.numMinInurl);
+            this.Controls.Add(this.lblMinInurl);
+            this.Controls.Add(this.numMaxResults);
+            this.Controls.Add(this.lblMaxResults);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.lblPriority);
@@ -108,8 +238,12 @@ namespace Foca.SerpApiDuckDuckGo.Ui
             this.MinimizeBox = false;
             this.Name = "ConfigForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Configuración de SerpApi";
+            this.Text = "Configuración";
             this.Load += new System.EventHandler(this.ConfigForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.numMinInurl)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numMaxResults)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numMaxPages)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numDelayPages)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
         }

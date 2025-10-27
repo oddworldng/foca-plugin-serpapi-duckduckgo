@@ -90,8 +90,8 @@ namespace Foca
 				// Cargar icono si existe (opcional)
 				TryLoadIcon(root);
 
-                // Submenú Configuración de SerpApi
-				var miConfig = new ToolStripMenuItem("Configuración de SerpApi");
+                // Submenú Configuración
+                var miConfig = new ToolStripMenuItem("Configuración");
 				miConfig.Click += (s, e) =>
 				{
 					try

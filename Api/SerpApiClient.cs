@@ -20,6 +20,8 @@ namespace Foca.SerpApiDuckDuckGo.Api
         private readonly HttpClient _httpClient;
         private readonly int _rpm;
         private readonly TimeSpan _timeout;
+        private readonly int _maxRetries429;
+        private readonly int _baseRetryDelayMs;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private DateTime _lastRequest = DateTime.MinValue;
 
@@ -30,18 +32,24 @@ namespace Foca.SerpApiDuckDuckGo.Api
 
             int rpm = 30;
             int timeoutSec = 20;
+            int retries429 = 2;
+            int baseDelayMs = 1500;
             try { rpm = int.Parse(ConfigurationManager.AppSettings["RequestsPerMinute"] ?? "30"); } catch { }
             try { timeoutSec = int.Parse(ConfigurationManager.AppSettings["SerpApiTimeoutSeconds"] ?? "20"); } catch { }
+            try { retries429 = int.Parse(ConfigurationManager.AppSettings["SerpApiRetry429Max"] ?? "2"); } catch { }
+            try { baseDelayMs = int.Parse(ConfigurationManager.AppSettings["SerpApiRetry429BaseDelayMs"] ?? "1500"); } catch { }
             _rpm = Math.Max(1, rpm);
             _timeout = TimeSpan.FromSeconds(Math.Max(5, timeoutSec));
             _httpClient.Timeout = _timeout;
+            _maxRetries429 = Math.Max(0, retries429);
+            _baseRetryDelayMs = Math.Max(250, baseDelayMs);
         }
 
         // No exponer JObject en la API pública para evitar fallos de importación del plugin
         public async Task<(bool ok, string error, string json)> TestConnectionAsync(string apiKey, CancellationToken ct = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(apiKey)) return (false, "API Key no configurada", null);
-            var url = $"https://serpapi.com/search.json?engine=duckduckgo&q=test&api_key={Uri.EscapeDataString(apiKey)}";
+            var url = $"https://serpapi.com/search.json?engine=duckduckgo&q=test&no_cache=true&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}&api_key={Uri.EscapeDataString(apiKey)}";
             var (ok, err, jsonObj) = await GetAsync(url, ct);
             return (ok, err, jsonObj);
         }
@@ -52,7 +60,28 @@ namespace Foca.SerpApiDuckDuckGo.Api
             var sb = new StringBuilder("https://serpapi.com/search.json?engine=duckduckgo");
             sb.Append("&q=").Append(Uri.EscapeDataString(query ?? string.Empty));
             if (!string.IsNullOrWhiteSpace(kl)) sb.Append("&kl=").Append(Uri.EscapeDataString(kl));
-            if (page > 0) sb.Append("&start=").Append(page * 10); // DuckDuckGo step; SerpApi paginates by start index
+            // DuckDuckGo en SerpApi usa 'pageno' empezando en 1 para paginar
+            if (page >= 0) sb.Append("&pageno=").Append(page + 1);
+            sb.Append("&no_cache=true");
+            sb.Append("&t=").Append(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            sb.Append("&api_key=").Append(Uri.EscapeDataString(apiKey));
+            var url = sb.ToString();
+            var (ok, err, jsonObj) = await GetAsync(url, ct);
+            return (ok, err, jsonObj);
+        }
+
+        public async Task<(bool ok, string error, string json)> SearchGoogleAsync(string apiKey, string query, string hl, string gl, int start, string googleDomain = null, int num = 10, CancellationToken ct = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(apiKey)) return (false, "API Key no configurada", null);
+            var sb = new StringBuilder("https://serpapi.com/search.json?engine=google");
+            sb.Append("&q=").Append(Uri.EscapeDataString(query ?? string.Empty));
+            if (!string.IsNullOrWhiteSpace(hl)) sb.Append("&hl=").Append(Uri.EscapeDataString(hl));
+            if (!string.IsNullOrWhiteSpace(gl)) sb.Append("&gl=").Append(Uri.EscapeDataString(gl));
+            if (!string.IsNullOrWhiteSpace(googleDomain)) sb.Append("&google_domain=").Append(Uri.EscapeDataString(googleDomain));
+            if (num > 0) sb.Append("&num=").Append(num);
+            if (start > 0) sb.Append("&start=").Append(start); // 0,10,20,...
+            sb.Append("&no_cache=true");
+            sb.Append("&t=").Append(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             sb.Append("&api_key=").Append(Uri.EscapeDataString(apiKey));
             var url = sb.ToString();
             var (ok, err, jsonObj) = await GetAsync(url, ct);
@@ -63,28 +92,59 @@ namespace Foca.SerpApiDuckDuckGo.Api
         private async Task<(bool ok, string error, string json)> GetAsync(string url, CancellationToken ct)
         {
             await RespectRateLimitAsync(ct);
-            try
+            int attempt = 0;
+            while (true)
             {
-                var req = new HttpRequestMessage(HttpMethod.Get, url);
-                var res = await _httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-                var body = await res.Content.ReadAsStringAsync();
-                if (!res.IsSuccessStatusCode)
+                try
                 {
-                    if (res.StatusCode == HttpStatusCode.Unauthorized || res.StatusCode == HttpStatusCode.Forbidden)
-                        return (false, "Acceso denegado por SerpApi (401/403). Verifica la API Key o el plan.", null);
-                    return (false, $"Error HTTP {(int)res.StatusCode}: {res.ReasonPhrase}", null);
+                    var req = new HttpRequestMessage(HttpMethod.Get, url);
+                    // Evitar cachés intermedias
+                    req.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true, NoStore = true };
+                    req.Headers.Pragma.ParseAdd("no-cache");
+                    var res = await _httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+                    var body = await res.Content.ReadAsStringAsync();
+                    if (!res.IsSuccessStatusCode)
+                    {
+                        if (res.StatusCode == (HttpStatusCode)429)
+                        {
+                            // Backoff con Retry-After o exponencial
+                            if (attempt >= _maxRetries429)
+                                return (false, "Límite de peticiones superado (429). Espera unos segundos y vuelve a intentarlo.", null);
+
+                            int delayMs = _baseRetryDelayMs * (int)Math.Pow(2, attempt);
+                            try
+                            {
+                                if (res.Headers.RetryAfter != null)
+                                {
+                                    if (res.Headers.RetryAfter.Delta.HasValue)
+                                        delayMs = (int)Math.Max(delayMs, res.Headers.RetryAfter.Delta.Value.TotalMilliseconds);
+                                    else if (res.Headers.RetryAfter.Date.HasValue)
+                                        delayMs = (int)Math.Max(delayMs, (res.Headers.RetryAfter.Date.Value - DateTimeOffset.UtcNow).TotalMilliseconds);
+                                }
+                            }
+                            catch { }
+                            // Jitter
+                            delayMs += new Random().Next(100, 400);
+                            await Task.Delay(Math.Max(250, delayMs), ct);
+                            attempt++;
+                            continue;
+                        }
+                        if (res.StatusCode == HttpStatusCode.Unauthorized || res.StatusCode == HttpStatusCode.Forbidden)
+                            return (false, "Acceso denegado por SerpApi (401/403). Verifica la API Key o el plan.", null);
+                        return (false, $"Error HTTP {(int)res.StatusCode}: {res.ReasonPhrase}", null);
+                    }
+                    // No parseamos aquí para no requerir Newtonsoft.Json en firmas públicas
+                    return (true, null, body);
                 }
-                // No parseamos aquí para no requerir Newtonsoft.Json en firmas públicas
-                return (true, null, body);
-            }
-            catch (TaskCanceledException)
-            {
-                return (false, "La solicitud a SerpApi expiró por timeout.", null);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex);
-                return (false, $"Error de red: {ex.Message}", null);
+                catch (TaskCanceledException)
+                {
+                    return (false, "La solicitud a SerpApi expiró por timeout.", null);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                    return (false, $"Error de red: {ex.Message}", null);
+                }
             }
         }
 
